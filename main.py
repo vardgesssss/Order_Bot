@@ -596,10 +596,10 @@ async def process_payment_confirmation(callback: CallbackQuery, state: FSMContex
 Ваше мнение очень важно для нас и поможет другим клиентам сделать правильный выбор.
 
 📝 <b>Оставить отзыв можно здесь:</b>
-https://t.me/qwert1moment/2
+https://t.me/otzivi_konditera/4
 
 💬 <b>Есть вопросы?</b> Общайтесь с другими клиентами:
-https://t.me/+zdtovQ9SvMxjZTUy
+https://t.me/+pbxRUOdyXBBlOWVi
 
 🙏 Спасибо за ваш заказ!"""
     
@@ -637,10 +637,10 @@ async def show_reviews(message: Message):
 
 👇 <b>Нажмите на ссылку ниже, чтобы перейти к отзывам:</b>
 
-https://t.me/qwert1moment/2
+https://t.me/otzivi_konditera/4
 
 💬 <b>Есть вопросы?</b> Общайтесь с другими клиентами в нашем чате:
-https://t.me/+zdtovQ9SvMxjZTUy
+https://t.me/+pbxRUOdyXBBlOWVi
 
 🙏 Спасибо за то, что выбираете нас!"""
     
