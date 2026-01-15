@@ -19,7 +19,6 @@ Telegram-бот для автоматизации приёма заказов в
 - **Python 3.8+**
 - **aiogram** (3.5.0) - асинхронный фреймворк для работы с Telegram Bot API
 - **python-dotenv** (1.0.1) - загрузка переменных окружения
-- **aiohttp** (3.9.1) - асинхронный HTTP клиент
 
 ## Как запустить
 
@@ -56,17 +55,6 @@ python main.py
    - `BOT_TOKEN` - токен Telegram бота
    - `MANAGER_CHAT_ID` - ID чата менеджера для уведомлений
 
-### Деплой на Heroku
-
-1. Создайте новое приложение в Heroku
-2. Подключите репозиторий
-3. Heroku автоматически определит `Procfile` и `app.json`
-4. Добавьте переменные окружения в настройках приложения:
-   - `BOT_TOKEN` - токен Telegram бота (обязательно)
-   - `MANAGER_CHAT_ID` - ID чата менеджера (обязательно)
-   - `ENABLE_ORDER_NOTIFICATIONS` - включить уведомления (опционально, по умолчанию true)
-   - `ORDER_NOTIFICATION_TEMPLATE` - шаблон уведомлений (опционально, по умолчанию default)
-
 ## Структура проекта
 
 ```
@@ -79,8 +67,7 @@ Order_Bot/
 │   ├── keyboards.py     # Клавиатуры для интерфейса
 │   └── states.py        # Состояния FSM для оформления заказа
 ├── requirements.txt     # Зависимости Python
-├── Procfile            # Конфигурация для Railway/Heroku
-├── app.json            # Конфигурация для Heroku
+├── Procfile            # Конфигурация для Railway
 ├── setup.py            # Установочный скрипт
 └── README.md           # Документация
 ```
