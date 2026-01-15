@@ -6,9 +6,9 @@ from typing import List, Optional
 class Cake:
     id: str
     name: str
-    price: int  # в рублях
+    price: int
     description: str
-    photo_url: str  # URL фотографии торта
+    photo_url: str
 
 
 CATALOG: List[Cake] = [
