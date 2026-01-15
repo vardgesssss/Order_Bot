@@ -27,14 +27,12 @@ from app.config import (
 )
 from app.config import WELCOME_EFFECT_ID
 
-# Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Память корзин пользователей: user_id -> {cake_id: qty}
 CARTS: DefaultDict[int, Dict[str, int]] = defaultdict(dict)
 
 
@@ -58,8 +56,6 @@ def cart_text(user_id: int) -> str:
     lines.append(f"Итого: {cart_total(user_id)}₽")
     return "\n".join(lines)
 
-
-# ==================== ВСПОМОГАТЕЛЬНОЕ: РАСПИСАНИЕ И СЛОТЫ ====================
 
 def _parse_schedule_start() -> date:
     try:
@@ -85,7 +81,6 @@ def generate_available_dates(now_dt: datetime) -> List[str]:
         d = (now_dt.date() + timedelta(days=i))
         if not is_working_day(d):
             continue
-        # Проверка минимального времени: если день текущий, должен быть хотя бы MIN_LEAD_HOURS
         if i == 0:
             if now_dt + timedelta(hours=MIN_LEAD_HOURS) < datetime.combine(d, dt_time(hour=WORKING_HOURS_END)):
                 dates.append(d.isoformat())
@@ -130,7 +125,6 @@ def format_method_ru(method: str | None) -> str:
 
 
 def format_address_line(order_data: dict) -> str:
-    """Формирует строку с адресом только для доставки"""
     method = order_data.get('delivery_method')
     if method == "доставка":
         address = order_data.get('address', 'не указан')
@@ -142,7 +136,6 @@ async def cmd_start(message: Message, state: FSMContext):
     logger.info(f"Команда /start от пользователя {message.from_user.id}")
     await state.clear()
     
-    # Отправляем приветственный стикер
     try:
         await message.answer_sticker(
             "CAACAgIAAxkBAAEPUWpou_GAnCdMdk0HEhGmGzuw1PBipgACBQADwDZPE_lqX5qCa011NgQ"
@@ -150,7 +143,6 @@ async def cmd_start(message: Message, state: FSMContext):
     except:
         pass
 
-    # Приветственный текст с цитатой и эффектом
     text = f"""
 Привет, <b>{message.from_user.first_name}</b>! 👋 Рады видеть тебя в нашем боте 🥳
 
@@ -165,7 +157,6 @@ async def cmd_start(message: Message, state: FSMContext):
 👇 Выберите вариант ниже и начнём:
 """
 
-    # Отправляем с эффектом салюта
     await message.answer(
         text,
         reply_markup=main_menu_kb(message.from_user.id),
@@ -183,20 +174,16 @@ async def show_catalog(message: Message | CallbackQuery):
         "💡 Все торты готовятся из свежих ингредиентов по домашним рецептам."
     )
     if isinstance(message, Message):
-        # Удаляем предыдущее сообщение (главное меню) при переходе в каталог
         try:
             await message.delete()
         except:
             pass
-        # Отправляем новое сообщение с каталогом
         await message.answer(text, reply_markup=catalog_kb())
     else:
-        # Удаляем предыдущее сообщение при переходе в каталог
         try:
             await message.message.delete()
         except:
             pass
-        # Отправляем новое сообщение с каталогом
         await message.message.answer(text, reply_markup=catalog_kb())
 
 
@@ -207,7 +194,6 @@ async def open_cake_card(callback: CallbackQuery):
         await callback.answer("Товар не найден", show_alert=True)
         return
     
-    # Формируем подпись к фото с полной информацией
     photo_caption = (
         f"🍰 <b>{cake.name}</b>\n\n"
         f"<blockquote>📝 {cake.description}\n\n"
@@ -216,12 +202,10 @@ async def open_cake_card(callback: CallbackQuery):
     )
     
     if callback.message:
-        # Удаляем предыдущее сообщение (каталог) при открытии карточки торта
         try:
             await callback.message.delete()
         except:
             pass
-        # Отправляем фото с полной информацией в подписи
         await callback.message.answer_photo(
             photo=cake.photo_url,
             caption=photo_caption,
@@ -242,12 +226,10 @@ async def add_to_cart(callback: CallbackQuery):
     new_qty = current_qty + 1
     CARTS[user_id][cake_id] = new_qty
     
-    # Формируем сообщение с полной корзиной
     message_lines = [f"🎉 {cake.name} добавлен в корзину!"]
     message_lines.append("")
     message_lines.append("📦 Ваша корзина:")
     
-    # Добавляем все товары из корзины
     for cart_cake_id, qty in CARTS[user_id].items():
         cart_cake = get_cake_by_id(cart_cake_id)
         if cart_cake:
@@ -260,12 +242,10 @@ async def add_to_cart(callback: CallbackQuery):
     message = "\n".join(message_lines)
     await callback.answer(message, show_alert=True)
     
-    # Обновляем кнопку, чтобы показать новое количество
     try:
         if callback.message:
             cake = get_cake_by_id(cake_id)
             if cake:
-                # Обновляем клавиатуру для сообщения с фото
                 await callback.message.edit_reply_markup(
                     reply_markup=cake_card_kb(cake, user_id)
                 )
@@ -278,21 +258,17 @@ async def open_cart(event: Message | CallbackQuery):
     text = cart_text(user_id)
     has_items = bool(CARTS[user_id])
     if isinstance(event, Message):
-        # Удаляем предыдущее сообщение (главное меню) при открытии корзины
         try:
             await event.delete()
         except:
             pass
-        # Отправляем новое сообщение с корзиной
         await event.answer(text, reply_markup=cart_kb(has_items))
     else:
         if event.message:
-            # Удаляем предыдущее сообщение при открытии корзины
             try:
                 await event.message.delete()
             except:
                 pass
-            # Отправляем новое сообщение с корзиной
             await event.message.answer(text, reply_markup=cart_kb(has_items))
         await event.answer()
 
@@ -315,9 +291,8 @@ async def start_checkout(callback: CallbackQuery, state: FSMContext):
 
 
 async def choose_delivery_method(callback: CallbackQuery, state: FSMContext):
-    method = callback.data.split(":", 1)[1]  # самовывоз | доставка
+    method = callback.data.split(":", 1)[1]
     await state.update_data(delivery_method=method)
-    # Далее — выбор даты
     await state.set_state(CheckoutState.delivery_date)
     now_dt = datetime.now()
     dates = generate_available_dates(now_dt)
@@ -356,7 +331,6 @@ async def choose_time(callback: CallbackQuery, state: FSMContext):
     payload = callback.data.split(":", 1)[1]
     time_str, date_str = payload.split("|")
     await state.update_data(delivery_time=time_str, delivery_date=date_str)
-    # Далее — ФИО
     await state.set_state(CheckoutState.full_name)
     await callback.message.edit_text("Введите ваше Имя:")
     await callback.answer()
@@ -375,7 +349,6 @@ async def ask_address(message: Message, state: FSMContext):
         await state.set_state(CheckoutState.address)
         await message.answer("Введите адрес доставки:")
     else:
-        # Самовывоз — адрес не спрашиваем
         await state.set_state(CheckoutState.comment)
         await message.answer("Комментарий к заказу (или '-' если без комментария):")
 
@@ -391,7 +364,6 @@ async def finish_checkout(message: Message, state: FSMContext):
     comment = message.text if message.text != "-" else "без комментария"
     user_id = message.from_user.id
 
-    # Сохраняем данные заказа в состоянии для последующей оплаты
     await state.update_data(
         full_name=data.get('full_name'),
         phone=data.get('phone'),
@@ -399,12 +371,10 @@ async def finish_checkout(message: Message, state: FSMContext):
         comment=comment
     )
 
-    # Формируем сообщение подтверждения заказа
     user_order_lines = ["🆕 ЗАКАЗ ОФОРМЛЕН"]
     user_order_lines.append("")
     user_order_lines.append("📋 Содержимое:")
     
-    # Добавляем содержимое корзины
     for cake_id, qty in CARTS[user_id].items():
         cake = get_cake_by_id(cake_id)
         if cake:
@@ -429,7 +399,6 @@ async def finish_checkout(message: Message, state: FSMContext):
     
     user_order_text = "\n".join(user_order_lines)
 
-    # Отправляем подтверждение заказа с кнопкой оплаты
     await message.answer(user_order_text, reply_markup=order_confirmation_kb())
     
     logger.info(f"Заказ пользователя {user_id} оформлен, ожидает оплаты")
@@ -449,12 +418,10 @@ async def back_handler(callback: CallbackQuery):
             "• /feedback - оставить отзыв\n\n"
             "💡 Выберите действие с помощью кнопок ниже!"
         )
-        # Удаляем старое сообщение
         try:
             await callback.message.delete()
         except:
             pass
-        # Отправляем новое сообщение с главным меню
         await callback.message.answer(text, reply_markup=main_menu_kb(callback.from_user.id))
     elif action == "catalog":
         await show_catalog(callback)
@@ -472,18 +439,13 @@ async def back_handler(callback: CallbackQuery):
     await callback.answer()
 
 
-# ==================== ОПЛАТА НА КАРТУ ====================
-
 async def start_payment(callback: CallbackQuery, state: FSMContext):
-    """Показывает реквизиты для оплаты"""
     user_id = callback.from_user.id
     
-    # Проверяем, что у пользователя есть заказ
     if not CARTS[user_id]:
         await callback.answer("Корзина пуста", show_alert=True)
         return
     
-    # Получаем данные заказа
     order_data = await state.get_data()
     
     payment_text = f"""💳 ОПЛАТА ЗАКАЗА
@@ -513,11 +475,9 @@ async def start_payment(callback: CallbackQuery, state: FSMContext):
 
 
 async def process_payment_confirmation(callback: CallbackQuery, state: FSMContext):
-    """Обрабатывает подтверждение оплаты"""
     user_id = callback.from_user.id
     order_data = await state.get_data()
     
-    # Формируем сообщение об успешной оплате
     success_text = f"""✅ ПЛАТЁЖ ПОДТВЕРЖДЁН!
 
 💳 Заказ оплачен на сумму: {cart_total(user_id)}₽
@@ -541,7 +501,6 @@ async def process_payment_confirmation(callback: CallbackQuery, state: FSMContex
 
 ✅ Ваш заказ принят и оплачен! Менеджер свяжется с вами в ближайшее время."""
     
-    # Отправляем уведомление менеджеру
     if MANAGER_CHAT_ID:
         manager_text = f"""💳 ПЛАТЁЖ ПОДТВЕРЖДЁН!
 
@@ -577,20 +536,16 @@ async def process_payment_confirmation(callback: CallbackQuery, state: FSMContex
         except Exception as e:
             logger.error(f"Ошибка при отправке заказа: {e}")
     
-    # Очищаем корзину и состояние
     CARTS.pop(user_id, None)
     await state.clear()
     
-    # Отправляем подтверждение пользователю
     await callback.message.edit_text(success_text)
     
-    # Отправляем стикер после оплаты
     try:
         await callback.message.answer_sticker("CAACAgIAAxkBAAEPUX1ou_UPzrbLgxAAAc6qcrkC74GQj70AAgEdAAJdjShIYFtNtyx1ELs2BA")
     except:
         pass
     
-    # Отправляем сообщение с просьбой оставить отзыв
     review_text = """⭐ <b>Пожалуйста, оставьте отзыв о нашем заказе!</b>
 
 Ваше мнение очень важно для нас и поможет другим клиентам сделать правильный выбор.
@@ -614,20 +569,17 @@ https://t.me/+pbxRUOdyXBBlOWVi
 
 
 async def cancel_payment(callback: CallbackQuery, state: FSMContext):
-    """Отменяет процесс оплаты"""
     await state.clear()
     await callback.message.edit_text("❌ Оплата отменена. Заказ сохранен в корзине.")
     await callback.answer()
 
 
 async def back_to_cart(callback: CallbackQuery, state: FSMContext):
-    """Возвращает к корзине"""
     await state.clear()
     await open_cart(callback)
 
 
 async def show_reviews(message: Message):
-    """Показывает информацию об отзывах"""
     text = """⭐ <b>Отзывы наших клиентов</b>
 
 Мы очень ценим мнение каждого клиента! Здесь вы можете:
@@ -648,19 +600,16 @@ https://t.me/+pbxRUOdyXBBlOWVi
 
 
 async def cmd_basket(message: Message):
-    """Команда /basket - открывает корзину"""
     await open_cart(message)
 
 
 async def cmd_feedback(message: Message):
-    """Команда /feedback - показывает информацию об отзывах"""
     await show_reviews(message)
 
 
 async def main():
     logger.info("Запуск кулинарного бота...")
     
-    # Проверяем критически важные настройки
     if not MANAGER_CHAT_ID:
         logger.error("❌ КРИТИЧЕСКАЯ ОШИБКА: MANAGER_CHAT_ID не настроен!")
         logger.error("❌ Заказы НЕ будут отправляться в чат менеджера!")
@@ -672,25 +621,20 @@ async def main():
     bot = Bot(BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
 
-    # Команды
     dp.message.register(cmd_start, CommandStart())
     dp.message.register(cmd_basket, Command("basket"))
     dp.message.register(cmd_feedback, Command("feedback"))
 
-    # Главное меню
     dp.message.register(show_catalog, F.text == "🍰 Каталог")
     dp.message.register(open_cart, F.text.startswith("🛒 Корзина"))
     dp.message.register(show_reviews, F.text == "⭐ Отзывы")
 
-    # Каталог и карточки
     dp.callback_query.register(open_cake_card, F.data.startswith("cake:"))
     dp.callback_query.register(add_to_cart, F.data.startswith("add:"))
 
-    # Корзина
     dp.callback_query.register(open_cart, F.data == "open:cart")
     dp.callback_query.register(clear_cart, F.data == "cart:clear")
 
-    # Оформление
     dp.callback_query.register(start_checkout, F.data == "cart:checkout")
     dp.callback_query.register(choose_delivery_method, F.data.startswith("delivery:"))
     dp.callback_query.register(choose_date, F.data.startswith("date:"))
@@ -700,10 +644,8 @@ async def main():
     dp.message.register(ask_comment, CheckoutState.address)
     dp.message.register(finish_checkout, CheckoutState.comment)
 
-    # Навигация
     dp.callback_query.register(back_handler, F.data.startswith("back:"))
     
-    # Платежи
     dp.callback_query.register(start_payment, F.data == "payment:start")
     dp.callback_query.register(process_payment_confirmation, F.data == "payment:confirm")
     dp.callback_query.register(cancel_payment, F.data == "payment:cancel")
