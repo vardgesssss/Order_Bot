@@ -10,7 +10,6 @@ from .catalog import CATALOG, Cake
 
 
 def main_menu_kb(user_id: int = None) -> ReplyKeyboardMarkup:
-    # Показываем количество товаров в корзине
     if user_id is not None:
         try:
             from main import CARTS
@@ -24,7 +23,6 @@ def main_menu_kb(user_id: int = None) -> ReplyKeyboardMarkup:
     else:
         button_text = "🛒 Корзина"
     
-    # Создаем клавиатуру вручную для правильной раскладки
     keyboard = [
         [KeyboardButton(text="🍰 Каталог"), KeyboardButton(text=button_text)],
         [KeyboardButton(text="⭐ Отзывы")]
@@ -48,13 +46,10 @@ def catalog_kb() -> InlineKeyboardMarkup:
 def cake_card_kb(cake: Cake, user_id: int = None) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
-    # Показываем количество в корзине, если пользователь указан
     if user_id is not None:
         from .catalog import get_cake_by_id
-        # Импортируем здесь, чтобы избежать циклических импортов
         current_qty = 0
         try:
-            # Получаем количество из корзины пользователя
             from main import CARTS
             current_qty = CARTS.get(user_id, {}).get(cake.id, 0)
         except:
@@ -84,7 +79,6 @@ def cart_kb(has_items: bool) -> InlineKeyboardMarkup:
 
 
 def order_confirmation_kb() -> InlineKeyboardMarkup:
-    """Клавиатура подтверждения заказа с кнопкой оплаты"""
     builder = InlineKeyboardBuilder()
     builder.button(text="💳 Оплатить заказ", callback_data="payment:start")
     builder.button(text="⬅️ Назад к корзине", callback_data="back:cart")
@@ -93,15 +87,12 @@ def order_confirmation_kb() -> InlineKeyboardMarkup:
 
 
 def payment_confirm_kb() -> InlineKeyboardMarkup:
-    """Клавиатура подтверждения оплаты"""
     builder = InlineKeyboardBuilder()
     builder.button(text="✅ Платёж выполнен", callback_data="payment:confirm")
     builder.button(text="❌ Отменить", callback_data="payment:cancel")
     builder.adjust(1)
     return builder.as_markup()
-    
 
-# ===================== ДОБАВЛЕНО: ПРЕДЗАКАЗ =====================
 
 def delivery_method_kb() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
@@ -115,7 +106,6 @@ def delivery_method_kb() -> InlineKeyboardMarkup:
 def dates_kb(date_items: list[str]) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for d in date_items:
-        # d приходит в ISO (YYYY-MM-DD). Показываем в формате ДД.ММ.ГГГГ
         try:
             y, m, day = [int(x) for x in d.split("-")]
             label = f"{day:02d}.{m:02d}.{y}"
